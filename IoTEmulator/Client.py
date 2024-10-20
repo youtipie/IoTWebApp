@@ -18,6 +18,19 @@ class CoAPClient:
         except Exception as e:
             return f"GET request failed: {e}"
 
+    async def observe(self, endpoint=""):
+        protocol = await Context.create_client_context()
+
+        request = Message(code=GET, uri=self.uri + endpoint, observe=0)
+
+        pr = protocol.request(request)
+
+        try:
+            async for response in pr.observation:
+                yield json.loads(response.payload.decode("utf-8"))
+        except Exception as e:
+            print(f"OBSERVE request failed: {e}")
+
     async def put(self, endpoint, name, value):
         protocol = await Context.create_client_context()
         request = Message(
@@ -39,6 +52,8 @@ if __name__ == "__main__":
         print(await client.get("/state"))
         print(await client.put("/state", "temperature", 11))
         print(await client.get("/state"))
+        async for res in client.observe("/state"):
+            print(res)
 
 
     asyncio.run(main())

@@ -16,16 +16,16 @@ class DeviceEmulator:
             raise ValueError("Invalid IP Address")
         self.__ip_address = ip
         self.__port = port
-        self.__config = config
-        self.__config["id"] = str(uuid.uuid4())  # Assign later on the backend
-        self.__state = self.__generate_state()
+        self.config = config
+        self.config["id"] = str(uuid.uuid4())  # Assign later on the backend
+        self.state = self.generate_state()
 
-    def __generate_state(self) -> dict:
+    def generate_state(self) -> dict:
         new_state = {}
-        values = itertools.chain(self.__config["readings"].items(), self.__config["parameters"].items())
+        values = itertools.chain(self.config["readings"].items(), self.config["parameters"].items())
         for (name, field) in values:
-            value = self.__state.get(name) if (hasattr(self, "__state")
-                                               and name in self.__config["parameters"]) else field.get("default")
+            value = self.state.get(name) if (hasattr(self, "state")
+                                             and name in self.config["parameters"]) else field.get("default")
             if value is None:
                 match field.get("type"):
                     case "bool":
@@ -40,22 +40,28 @@ class DeviceEmulator:
         return new_state
 
     class WhoAmI(resource.Resource):
-        def __init__(self, config: ConfigType):
-            self.__config = config
+        def __init__(self, current_device):
+            self.current_device = current_device
             super().__init__()
 
         async def render_get(self, request):
-            payload = json.dumps(self.__config).encode("utf-8")
+            payload = json.dumps(self.current_device).encode("utf-8")
             return Message(payload=payload)
 
-    class State(resource.Resource):
-        def __init__(self, config: ConfigType, state):
-            self.__config = config
-            self.__state = state
+    class State(resource.ObservableResource):
+        def __init__(self, current_device):
+            self.__current_device = current_device
             super().__init__()
+            asyncio.get_event_loop().create_task(self.notify_changes())
+
+        async def notify_changes(self):
+            while True:
+                self.__current_device.state = self.__current_device.generate_state()
+                self.updated_state()
+                await asyncio.sleep(5)
 
         async def render_get(self, request):
-            payload = {"success": True, "state": self.__state}
+            payload = {"success": True, "state": self.__current_device.state}
             return Message(payload=json.dumps(payload).encode("utf-8"))
 
         async def render_put(self, request):
@@ -73,14 +79,14 @@ class DeviceEmulator:
             if message:
                 return Message(payload=json.dumps({"success": False, "message": message}).encode("utf-8"))
 
-            self.__state[name] = value
+            self.__current_device.state[name] = value
             return Message(payload=json.dumps({"success": True}).encode("utf-8"))
 
         def __validate_payload(self, name, value):
-            if name not in self.__config["parameters"].keys():
+            if name not in self.__current_device.config["parameters"].keys():
                 return "Parameter cannot be modified or doesn't exist."
 
-            field = self.__config["parameters"][name]
+            field = self.__current_device.config["parameters"][name]
             match field["type"]:
                 case "bool":
                     if not isinstance(value, bool):
@@ -94,8 +100,8 @@ class DeviceEmulator:
 
     async def run(self):
         root = resource.Site()
-        root.add_resource(["whoami"], self.WhoAmI(self.__config))
-        root.add_resource(["state"], self.State(self.__config, self.__state))
+        root.add_resource(["whoami"], self.WhoAmI(self))
+        root.add_resource(["state"], self.State(self))
 
         await Context.create_server_context(root, bind=(self.__ip_address, self.__port))
         await asyncio.get_running_loop().create_future()
