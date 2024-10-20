@@ -1,7 +1,7 @@
 import asyncio
 import json
 
-from aiocoap import Context, Message, GET, PUT
+from aiocoap import Context, Message, GET, PUT, POST
 
 
 class CoAPClient:
@@ -45,15 +45,31 @@ class CoAPClient:
         except Exception as e:
             return f"PUT request failed: {e}"
 
+    async def post(self, endpoint, ip, port):
+        protocol = await Context.create_client_context()
+        request = Message(
+            code=POST,
+            uri=self.uri + endpoint,
+            payload=json.dumps({"ip": ip, "port": port}).encode("utf-8")
+        )
+
+        try:
+            response = await protocol.request(request).response
+            return json.loads(response.payload.decode("utf-8"))
+        except Exception as e:
+            return f"PUT request failed: {e}"
+
 
 if __name__ == "__main__":
     async def main():
         client = CoAPClient("coap://127.0.0.1:9999")
-        print(await client.get("/state"))
-        print(await client.put("/state", "temperature", 11))
-        print(await client.get("/state"))
-        async for res in client.observe("/state"):
-            print(res)
+        print(await client.post("/subscribe", "127.0.0.1", 10000))
+        print(await client.post("/subscribe", "127.0.0.1", 10001))
+        # print(await client.get("/state"))
+        # print(await client.put("/state", "temperature", 11))
+        # print(await client.get("/state"))
+        # async for res in client.observe("/state"):
+        #     print(res)
 
 
     asyncio.run(main())

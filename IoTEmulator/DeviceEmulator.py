@@ -5,7 +5,7 @@ import random
 import traceback
 import uuid
 
-from aiocoap import resource, Message, Context
+from aiocoap import resource, Message, Context, Code
 
 from IoTEmulator.config_type import ConfigType
 
@@ -17,8 +17,30 @@ class DeviceEmulator:
         self.__ip_address = ip
         self.__port = port
         self.config = config
+        self.observed_publishers = []
         self.config["id"] = str(uuid.uuid4())  # Assign later on the backend
         self.state = self.generate_state()
+
+    async def observe_device(self, target_ip: str, target_port: int, endpoint=""):
+        context = await Context.create_client_context()
+        request = Message(code=Code.GET, uri=f"coap://{target_ip}:{target_port}/state{endpoint}", observe=0)
+        pr = context.request(request)
+
+        observed_device = {"ip": target_ip, "port": target_port, "endpoint": endpoint}
+        if observed_device not in self.observed_publishers:
+            self.observed_publishers.append(observed_device)
+
+        try:
+            async for response in pr.observation:
+                state = json.loads(response.payload.decode("utf-8"))
+                print(f"Received state from {target_ip}:{target_port}: {state}")
+                # TODO: Act according to instructions received
+        except Exception as e:
+            print(f"OBSERVE request failed: {e}")
+
+    async def resume_observations(self):
+        for publisher in self.observed_publishers:
+            await self.observe_device(publisher["ip"], publisher["port"], publisher["endpoint"])
 
     def generate_state(self) -> dict:
         new_state = {}
@@ -98,12 +120,30 @@ class DeviceEmulator:
                         return f"Parameter have to be in range [{field['min']}; {field['max']}]"
             return None
 
+    class Subscribe(resource.Resource):
+        def __init__(self, current_device):
+            self.__current_device = current_device
+            super().__init__()
+
+        async def render_post(self, request):
+            payload = json.loads(request.payload.decode("utf-8"))
+            ip = payload.get("ip")
+            port = payload.get("port")
+            if not ip or not port:
+                return Message(
+                    payload=json.dumps({"success": False, "message": "Invalid subscription data"}).encode("utf-8"))
+
+            asyncio.create_task(self.__current_device.observe_device(ip, port, ""))
+            return Message(payload=json.dumps({"success": True, "message": "Subscription successful"}).encode("utf-8"))
+
     async def run(self):
         root = resource.Site()
         root.add_resource(["whoami"], self.WhoAmI(self))
         root.add_resource(["state"], self.State(self))
+        root.add_resource(["subscribe"], self.Subscribe(self))
 
         await Context.create_server_context(root, bind=(self.__ip_address, self.__port))
+        await self.resume_observations()
         await asyncio.get_running_loop().create_future()
 
 
