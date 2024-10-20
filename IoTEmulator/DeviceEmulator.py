@@ -24,7 +24,8 @@ class DeviceEmulator:
         new_state = {}
         values = itertools.chain(self.__config["readings"].items(), self.__config["parameters"].items())
         for (name, field) in values:
-            value = self.__state.get(name) if hasattr(self, "_state") else field.get("default")
+            value = self.__state.get(name) if (hasattr(self, "__state")
+                                               and name in self.__config["parameters"]) else field.get("default")
             if value is None:
                 match field.get("type"):
                     case "bool":
