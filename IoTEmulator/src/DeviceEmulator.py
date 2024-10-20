@@ -7,7 +7,7 @@ import uuid
 
 from aiocoap import resource, Message, Context
 
-from IoTEmulator.config_type import ConfigType
+from config_type import ConfigType
 
 
 class DeviceEmulator:
@@ -33,7 +33,7 @@ class DeviceEmulator:
                     case "range":
                         if not (field.get("min") and field.get("max")):
                             raise ValueError("Range must have both min and max value.")
-                        value = random.uniform(field["min"], field["max"])
+                        value = random.uniform(float(field["min"]), float(field["max"]))
                     case _:
                         raise TypeError(f"Invalid type for field: '{name}'")
             new_state[name] = value

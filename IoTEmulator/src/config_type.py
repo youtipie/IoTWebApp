@@ -22,3 +22,5 @@ class ConfigType(TypedDict):
     description: Optional[str]
     readings: Optional[Dict[str, DataType]]
     parameters: Optional[Dict[str, DataType]]
+    def validate(self) -> None:
+        pass
