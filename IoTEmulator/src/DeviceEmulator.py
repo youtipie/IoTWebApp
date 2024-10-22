@@ -9,8 +9,8 @@ from typing import List
 
 from aiocoap import resource, Message, Context, Code
 
-from IoTEmulator.src.Client import CoAPClient
-from IoTEmulator.src.config_type import ConfigType, ControlConfig, operators_dict
+from .Client import CoAPClient
+from .config_type import ConfigType, ControlConfig, operators_dict
 
 
 class DeviceEmulator:
