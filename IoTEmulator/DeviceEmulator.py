@@ -35,8 +35,8 @@ class DeviceEmulator:
             "observed_publishers": self.observed_publishers,
             "instructions": self.instructions
         }
-        with open(self.datafile_location, "w") as f:
-            json.dump(data, f, indent=4)
+        # with open(self.datafile_location, "w") as f:
+        #     json.dump(data, f, indent=4)
 
     def load_data(self, config=None):
         if os.path.exists(self.datafile_location):
@@ -331,28 +331,3 @@ class DeviceEmulator:
         await Context.create_server_context(root, bind=(self.__ip_address, self.__port))
         await self.resume_observations()
         await asyncio.get_running_loop().create_future()
-
-
-if __name__ == "__main__":
-    async def main():
-        config: ConfigType = {
-            "name": "Temp",
-            "readings": {
-                "is_enabled": {
-                    "type": "bool"
-                }
-            },
-            "parameters": {
-                "temperature": {
-                    "type": "range",
-                    "default": 0,
-                    "min": -50,
-                    "max": 50
-                }
-            }
-        }
-        device = DeviceEmulator("127.0.0.1", 9999, "device1.json", config)
-        await device.run()
-
-
-    asyncio.run(main())

@@ -1,4 +1,3 @@
-import asyncio
 import json
 import traceback
 
@@ -88,74 +87,3 @@ class CoAPClient:
         except Exception as e:
             print(traceback.print_exception(e))
             return {"success": False, "message": "Something went wrong."}
-
-
-if __name__ == "__main__":
-    async def main():
-        async with CoAPClient("127.0.0.1", 9999) as client:
-            # print(await client.delete("/subscribe", "7c89f78f-68d4-4175-9996-ba4f324a33a3"))
-            # print(await client.delete("/subscribe", "087e1cb8-50cb-410b-a464-3f8aa1d7e9ce"))
-            s1 = await client.post("/subscribe", {
-                "match": "any",  # all or any
-                "instructions": [
-                    {
-                        "device": ("127.0.0.1", 10000),
-                        "name": "brightness",
-                        "operator": "==",  # or = or != or < or <= or > or >=
-                        "value": 10
-                    },
-                    {
-                        "device": ("127.0.0.1", 10001),
-                        "name": "humidity",
-                        "operator": ">",  # or = or != or < or <= or > or >=
-                        "value": 0
-                    }
-                ],
-                "actions": [
-                    {
-                        "name": "temperature",
-                        "value": 5  # bool or float
-                    }
-                ]
-            })
-            s2 = await client.post("/subscribe", {
-                "match": "any",  # all or any
-                "instructions": [
-                    {
-                        "device": ("127.0.0.1", 10000),
-                        "name": "brightness",
-                        "operator": "==",  # or = or != or < or <= or > or >=
-                        "value": 10
-                    },
-                    {
-                        "device": ("127.0.0.1", 10001),
-                        "name": "humidity",
-                        "operator": "<",  # or = or != or < or <= or > or >=
-                        "value": 0
-                    }
-                ],
-                "actions": [
-                    {
-                        "name": "temperature",
-                        "value": 20  # bool or float
-                    }
-                ]
-            })
-            await asyncio.sleep(5)
-            print(await client.delete("/subscribe", s1["subscription_id"]))
-            await asyncio.sleep(6)
-            print(await client.delete("/subscribe", s2["subscription_id"]))
-        # async with CoAPClient("127.0.0.1", 10001) as client:
-        #     print(await client.put("/state", "humidity", -5))
-        # client = CoAPClient("coap://127.0.0.1:9999")
-        # print(await client.post("/subscribe", "127.0.0.1", 10000))
-        # print(await client.post("/subscribe", "127.0.0.1", 10001))
-        #
-        # print(await client.get("/state"))
-        # print(await client.put("/state", "temperature", 11))
-        # print(await client.get("/state"))
-        # async for res in client.observe("/state"):
-        #     print(res)
-
-
-    asyncio.run(main())
