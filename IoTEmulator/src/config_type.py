@@ -1,4 +1,5 @@
-from typing import TypedDict, Union, Literal, Dict, Optional
+import operator
+from typing import TypedDict, Union, Literal, Dict, Optional, Tuple, List
 
 
 class BoolType(TypedDict):
@@ -24,3 +25,32 @@ class ConfigType(TypedDict):
     parameters: Optional[Dict[str, DataType]]
     def validate(self) -> None:
         pass
+
+
+class InstructionType(TypedDict):
+    device: Tuple[str, int]
+    name: str
+    operator: Literal["==", "!=", "<", "<=", ">", ">="]
+    value: Union[bool, float]
+
+
+class ActionType(TypedDict):
+    name: str
+    value: Union[bool, float]
+
+
+class ControlConfig(TypedDict):
+    id: Optional[str]
+    match: Literal["all", "any"]
+    instructions: List[InstructionType]
+    actions: List[ActionType]
+
+
+operators_dict = {
+    "==": operator.eq,
+    "!=": operator.ne,
+    "<": operator.lt,
+    "<=": operator.le,
+    ">": operator.gt,
+    ">=": operator.ge
+}
