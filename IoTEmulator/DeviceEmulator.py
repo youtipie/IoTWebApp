@@ -25,6 +25,7 @@ class DeviceEmulator:
         self.publisher_states = {}
         self.instructions: List[ControlConfig] = []
         self.subscriptions_to_cancel = []
+        self.observations = {}
         self.config["id"] = str(uuid.uuid4())  # Assign later on the backend
         self.load_data(config)
         self.state = self.generate_state()
@@ -35,8 +36,8 @@ class DeviceEmulator:
             "observed_publishers": self.observed_publishers,
             "instructions": self.instructions
         }
-        # with open(self.datafile_location, "w") as f:
-        #     json.dump(data, f, indent=4)
+        with open(self.datafile_location, "w") as f:
+            json.dump(data, f, indent=4)
 
     def load_data(self, config=None):
         if os.path.exists(self.datafile_location):
@@ -56,7 +57,6 @@ class DeviceEmulator:
     async def observe_device_state(self, target_ip: str, target_port: int):
         context = await Context.create_client_context()
         request = Message(code=Code.GET, uri=f"coap://{target_ip}:{target_port}/state", observe=0)
-        publisher = {"ip": target_ip, "port": target_port}
         pr = context.request(request)
 
         try:
@@ -64,32 +64,6 @@ class DeviceEmulator:
                 response = json.loads(response.payload.decode("utf-8"))
                 if response.get("success"):
                     self.publisher_states[(target_ip, target_port)] = response.get("state")
-
-                    if publisher not in self.observed_publishers:
-                        print("Got data from publisher that shouldn't be observed. Unsubscribing.")
-                        return
-
-                    publisher_found = False
-                    for control_config in self.instructions:
-                        if control_config["id"] in self.subscriptions_to_cancel:
-                            self.subscriptions_to_cancel.remove(control_config["id"])
-                            self.instructions.remove(control_config)
-                            print(f"Found subscription to cancel! Unsubscribing.")
-                            self.save_data()
-                            continue
-                        for instruction in control_config["instructions"]:
-                            if tuple(instruction["device"]) == (target_ip, target_port):
-                                publisher_found = True
-                                break
-                        if publisher_found:
-                            break
-
-                    # Do not proceed if publisher is not in any instructions
-                    if not publisher_found:
-                        print(f"Publisher ({target_ip}:{target_port}) not found in any instructions. Unsubscribing.")
-                        self.observed_publishers.remove(publisher)
-                        self.save_data()
-                        return
 
                     for control_config in self.instructions:
                         try:
@@ -116,17 +90,36 @@ class DeviceEmulator:
                             print(traceback.print_exception(e))
                             print("Something went wrong. Config was changed or publisher "
                                   "device changed it's state. Revoking subscription")
-                            self.instructions.remove(control_config)
-                            self.observed_publishers.remove(publisher)
-                            self.publisher_states.pop((target_ip, target_port))
-                            self.save_data()
-                            return
+                            # CANCEL OR NOT? May cause bugs but I am not sure
+                            self.observed_publishers.remove({"ip": target_ip, "port": target_port})
+                            await self.cancel_observation((target_ip, target_port))
         except Exception as e:
             print(traceback.print_exception(e))
 
     async def resume_observations(self):
         for publisher in self.observed_publishers:
-            asyncio.create_task(self.observe_device_state(publisher["ip"], publisher["port"]))
+            print(f"Resuming observation for publisher {publisher}")
+            self.observations[(publisher["ip"], publisher["port"])] = asyncio.create_task(
+                self.observe_device_state(publisher["ip"], publisher["port"]))
+
+    async def cancel_observation(self, device):
+        observation = self.observations[device]
+        if observation:
+            observation.cancel()
+            try:
+                await observation
+            except asyncio.CancelledError:
+                print("Canceled", observation)
+
+    async def cancel_all_observations(self):
+        for observation in self.observations.values():
+            if observation:
+                observation.cancel()
+                try:
+                    await observation
+                except asyncio.CancelledError:
+                    print("Canceled", observation)
+        self.observations = {}
 
     def validate_state_update(self, name, value, config=None):
         if not config:
@@ -217,11 +210,6 @@ class DeviceEmulator:
             # Instead of validating instructions while observing. Validate here and reject subscription if failed.
             control_config: ControlConfig = json.loads(request.payload.decode("utf-8"))
 
-            if control_config in self.__current_device.instructions:
-                return Message(payload=json.dumps(
-                    {"success": True, "message": "Subscription successful"}
-                ).encode("utf-8"))
-
             try:
                 if control_config["match"] not in ["all", "any"]:
                     return Message(payload=json.dumps(
@@ -293,7 +281,6 @@ class DeviceEmulator:
                     observed_device = {"ip": device[0], "port": device[1]}
                     if observed_device not in self.__current_device.observed_publishers:
                         self.__current_device.observed_publishers.append(observed_device)
-                        asyncio.create_task(self.__current_device.observe_device_state(device[0], device[1]))
             except (KeyError, TypeError, AttributeError) as e:
                 print(traceback.print_exception(e))
                 return Message(payload=json.dumps(
@@ -304,20 +291,41 @@ class DeviceEmulator:
             instruction_id = str(uuid.uuid4())
             control_config["id"] = instruction_id
             self.__current_device.instructions.append(control_config)
+            await self.__current_device.cancel_all_observations()
+            await self.__current_device.resume_observations()
             self.__current_device.save_data()
             return Message(payload=json.dumps(
                 {"success": True, "message": "Subscription successful.", "subscription_id": instruction_id}
             ).encode("utf-8"))
 
-        # TODO: Fix 'Task was destroyed but it is pending!'
         async def render_delete(self, request):
             subscription_id = json.loads(request.payload.decode("utf-8"))
-            # Modifying instructions directly cause 'Task was destroyed but it is pending!'
-            # self.__current_device.instructions = [
-            #     sub for sub in self.__current_device.instructions if sub.get("id") != subscription_id
-            # ]
-            # self.__current_device.save_data()
-            self.__current_device.subscriptions_to_cancel.append(subscription_id)
+            self.__current_device.instructions = [
+                sub for sub in self.__current_device.instructions if sub.get("id") != subscription_id
+            ]
+
+            if len(self.__current_device.instructions) == 0:
+                self.__current_device.observed_publishers = []
+                # CANCEL ALL OBSERVATIONS
+                await self.__current_device.cancel_all_observations()
+
+            for subscription in self.__current_device.instructions:
+                for device in self.__current_device.observed_publishers:
+                    ip = device["ip"]
+                    port = device["port"]
+                    is_used = False
+
+                    for instruction in subscription["instructions"]:
+                        if [ip, port] == instruction["device"]:
+                            is_used = True
+                            break
+
+                    if not is_used:
+                        self.__current_device.observed_publishers.remove(device)
+                        # CANCEL OBSERVATION TASK
+                        await self.__current_device.cancel_observation((ip, port))
+
+            self.__current_device.save_data()
             return Message(payload=json.dumps(
                 {"success": True, "message": f"Subscription successfully canceled: {subscription_id}"}
             ).encode("utf-8"))
