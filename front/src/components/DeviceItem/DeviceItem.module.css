@@ -1,0 +1,14 @@
+.deviceItem {
+  display: flex;
+  border: 1px solid black;
+  padding: 5px;
+  border-radius: 5px;
+  justify-content: space-between;
+  width: 200px;
+}
+
+.deviceLink {
+  display: flex;
+  width: 200px;
+  justify-content: space-between;
+}
