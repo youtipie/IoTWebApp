@@ -1,9 +1,9 @@
 import asyncio
 import itertools
 import json
+import logging
 import os
 import random
-import traceback
 import uuid
 from typing import List
 
@@ -11,6 +11,8 @@ from aiocoap import resource, Message, Context, Code
 
 from .Client import CoAPClient
 from .config_type import ConfigType, ControlConfig, operators_dict
+
+logger = logging.getLogger("DeviceEmulator")
 
 
 class DeviceEmulator:
@@ -46,9 +48,9 @@ class DeviceEmulator:
                 self.config = data.get("config", self.config)
                 self.observed_publishers = data.get("observed_publishers", [])
                 self.instructions = data.get("instructions", [])
-            print("Data loaded successfully!")
+            logger.debug("Config loaded successfully!")
         else:
-            print("No saved data found, starting with default config.")
+            logger.debug("No saved config found, starting with default.")
             if config is None:
                 raise ValueError("Config cannot be empty!")
             self.config = config
@@ -63,9 +65,11 @@ class DeviceEmulator:
             async for response in pr.observation:
                 response = json.loads(response.payload.decode("utf-8"))
                 if response.get("success"):
+                    logger.debug(f"Observe State from {(target_ip, target_port)}")
                     self.publisher_states[(target_ip, target_port)] = response.get("state")
 
                     for control_config in self.instructions:
+                        logger.debug(f"Checking instructions: {control_config['id']}")
                         try:
                             conditions = 0
                             max_conditions = 1 if control_config["match"] == "any" else (
@@ -84,21 +88,22 @@ class DeviceEmulator:
                                                 name = action["name"]
                                                 value = action["value"]
                                                 self.state[name] = value
-                                                print(f"{control_config["id"]}: {self.state}")
+                                                logger.debug(f"Successful check for {control_config["id"]}: "
+                                                            f"changing '{name}' to '{value}'")
                                             break
                         except (KeyError, TypeError, AttributeError) as e:
-                            print(traceback.print_exception(e))
-                            print("Something went wrong. Config was changed or publisher "
-                                  "device changed it's state. Revoking subscription")
+                            logger.error(e)
+                            logger.warn("Something went wrong. Config was changed or publisher "
+                                        "device changed it's state. Revoking subscription")
                             # CANCEL OR NOT? May cause bugs but I am not sure
                             self.observed_publishers.remove({"ip": target_ip, "port": target_port})
                             await self.cancel_observation((target_ip, target_port))
         except Exception as e:
-            print(traceback.print_exception(e))
+            logger.error(e)
 
     async def resume_observations(self):
         for publisher in self.observed_publishers:
-            print(f"Resuming observation for publisher {publisher}")
+            logger.debug(f"Started observation for publisher {publisher}")
             self.observations[(publisher["ip"], publisher["port"])] = asyncio.create_task(
                 self.observe_device_state(publisher["ip"], publisher["port"]))
 
@@ -109,16 +114,16 @@ class DeviceEmulator:
             try:
                 await observation
             except asyncio.CancelledError:
-                print("Canceled", observation)
+                logger.debug(f"Cancelled observation for publisher {device}")
 
     async def cancel_all_observations(self):
-        for observation in self.observations.values():
+        for device, observation in self.observations.items():
             if observation:
                 observation.cancel()
                 try:
                     await observation
                 except asyncio.CancelledError:
-                    print("Canceled", observation)
+                    logger.debug(f"Cancelled observation for publisher {device}")
         self.observations = {}
 
     def validate_state_update(self, name, value, config=None):
@@ -164,6 +169,7 @@ class DeviceEmulator:
             super().__init__()
 
         async def render_get(self, request):
+            logger.debug(f"{request.remote.uri_base_local}: GET WhoAmI")
             payload = json.dumps(self.current_device.config).encode("utf-8")
             return Message(payload=payload)
 
@@ -180,10 +186,12 @@ class DeviceEmulator:
                 await asyncio.sleep(5)
 
         async def render_get(self, request):
+            logger.debug(f"{request.remote.uri_base_local}: GET State")
             payload = {"success": True, "state": self.__current_device.state}
             return Message(payload=json.dumps(payload).encode("utf-8"))
 
         async def render_put(self, request):
+            logger.debug(f"{request.remote.uri_base_local}: PUT State")
             payload = json.loads(request.payload.decode("utf-8"))
             name = payload["name"]
             value = payload["value"]
@@ -191,7 +199,7 @@ class DeviceEmulator:
             try:
                 message = self.__current_device.validate_state_update(name, value)
             except Exception as e:
-                print(traceback.print_exception(e))
+                logger.error(e)
                 return Message(payload=json.dumps(
                     {"success": False, "message": "Something went wrong. Probably bad device configuration."}
                 ).encode("utf-8"))
@@ -207,7 +215,7 @@ class DeviceEmulator:
             super().__init__()
 
         async def render_post(self, request):
-            # Instead of validating instructions while observing. Validate here and reject subscription if failed.
+            logger.debug(f"{request.remote.uri_base_local}: POST Subscribe")
             control_config: ControlConfig = json.loads(request.payload.decode("utf-8"))
 
             try:
@@ -282,7 +290,7 @@ class DeviceEmulator:
                     if observed_device not in self.__current_device.observed_publishers:
                         self.__current_device.observed_publishers.append(observed_device)
             except (KeyError, TypeError, AttributeError) as e:
-                print(traceback.print_exception(e))
+                logger.error(e)
                 return Message(payload=json.dumps(
                     {"success": False, "message": "Invalid subscription data"}
                 ).encode("utf-8"))
@@ -299,6 +307,7 @@ class DeviceEmulator:
             ).encode("utf-8"))
 
         async def render_delete(self, request):
+            logger.debug(f"{request.remote.uri_base_local}: DELETE Subscribe")
             subscription_id = json.loads(request.payload.decode("utf-8"))
             self.__current_device.instructions = [
                 sub for sub in self.__current_device.instructions if sub.get("id") != subscription_id
@@ -337,5 +346,6 @@ class DeviceEmulator:
         root.add_resource(["subscribe"], self.Subscribe(self))
 
         await Context.create_server_context(root, bind=(self.__ip_address, self.__port))
+        logger.debug(f"Server started on {self.__ip_address}:{self.__port}")
         await self.resume_observations()
         await asyncio.get_running_loop().create_future()
