@@ -1,0 +1,22 @@
+.createDiv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.goBackLick {
+  position: absolute;
+  left: 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.formLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
