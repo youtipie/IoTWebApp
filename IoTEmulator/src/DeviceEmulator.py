@@ -89,7 +89,7 @@ class DeviceEmulator:
                                                 value = action["value"]
                                                 self.state[name] = value
                                                 logger.debug(f"Successful check for {control_config["id"]}: "
-                                                            f"changing '{name}' to '{value}'")
+                                                             f"changing '{name}' to '{value}'")
                                             break
                         except (KeyError, TypeError, AttributeError) as e:
                             logger.error(e)
@@ -213,6 +213,11 @@ class DeviceEmulator:
         def __init__(self, current_device):
             self.__current_device = current_device
             super().__init__()
+
+        async def render_get(self, request):
+            logger.debug(f"{request.remote.uri_base_local}: GET Subscribe")
+            payload = {"success": True, "subscriptions": self.__current_device.instructions}
+            return Message(payload=json.dumps(payload).encode("utf-8"))
 
         async def render_post(self, request):
             logger.debug(f"{request.remote.uri_base_local}: POST Subscribe")
