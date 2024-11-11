@@ -38,6 +38,8 @@ class DeviceEmulator:
             "observed_publishers": self.observed_publishers,
             "instructions": self.instructions
         }
+        if "id" not in data["config"]:
+            data["config"]["id"] = str(uuid.uuid4())  # Assign later on the backend
         with open(self.datafile_location, "w") as f:
             json.dump(data, f, indent=4)
 
@@ -96,7 +98,6 @@ class DeviceEmulator:
                             logger.warn("Something went wrong. Config was changed or publisher "
                                         "device changed it's state. Revoking subscription")
                             # CANCEL OR NOT? May cause bugs but I am not sure
-                            self.observed_publishers.remove({"ip": target_ip, "port": target_port})
                             await self.cancel_observation((target_ip, target_port))
         except Exception as e:
             logger.error(e)
@@ -110,6 +111,7 @@ class DeviceEmulator:
     async def cancel_observation(self, device):
         observation = self.observations[device]
         if observation:
+            del self.observations[device]
             observation.cancel()
             try:
                 await observation
@@ -135,7 +137,7 @@ class DeviceEmulator:
         field = config["parameters"][name]
         match field["type"]:
             case "bool":
-                if not isinstance(value, bool) or isinstance(value, (int, float)):
+                if not isinstance(value, bool) and isinstance(value, (int, float)):
                     return f"Invalid type: expected 'bool', got '{type(value).__name__}'"
             case "range":
                 if not isinstance(value, (int, float)) or isinstance(value, bool):
@@ -335,7 +337,6 @@ class DeviceEmulator:
                             break
 
                     if not is_used:
-                        self.__current_device.observed_publishers.remove(device)
                         # CANCEL OBSERVATION TASK
                         await self.__current_device.cancel_observation((ip, port))
 
