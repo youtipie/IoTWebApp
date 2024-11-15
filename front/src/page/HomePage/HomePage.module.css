@@ -1,0 +1,16 @@
+.homeDiv {
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: flex;
+  justify-content: center;
+}
+
+.addBtn {
+  display: flex;
+  margin-top: 25px;
+  width: 200px;
+  justify-content: center;
+}
