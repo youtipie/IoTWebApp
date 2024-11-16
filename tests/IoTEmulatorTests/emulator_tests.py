@@ -3,10 +3,9 @@ import asyncio
 import json
 import os
 import random
-from asyncio import Future
 from unittest.mock import AsyncMock, patch, MagicMock, Mock
-from aiocoap import Message, Code, Context
-from IoTEmulator import DeviceEmulator, ConfigType, ControlConfig
+from aiocoap import Message, Code
+from IoTEmulator import DeviceEmulator, ConfigType
 
 
 class TestDeviceEmulatorBase(unittest.IsolatedAsyncioTestCase):
@@ -22,7 +21,7 @@ class TestDeviceEmulatorBase(unittest.IsolatedAsyncioTestCase):
             readings={}
         )
 
-        port = random.randint(10000, 65535)
+        port = random.randint(10000, 30000)
         self.datafile_location = "temp_data.json"
         self.emulator = DeviceEmulator(ip="127.0.0.1", port=port, datafile_location=self.datafile_location,
                                        config=self.config)
@@ -231,8 +230,6 @@ class TestDeviceEmulatorSubscribeResource(TestDeviceEmulatorBase):
                 return state_response
             elif endpoint == "/whoami":
                 return whoami_response
-            else:
-                return {"success": False, "message": "Unknown endpoint"}
 
         mock_get.side_effect = mock_get_side_effect
 
@@ -276,8 +273,6 @@ class TestDeviceEmulatorSubscribeResource(TestDeviceEmulatorBase):
                 return state_response
             elif endpoint == "/whoami":
                 return whoami_response
-            else:
-                return {"success": False, "message": "Unknown endpoint"}
 
         mock_get.side_effect = mock_get_side_effect
 
@@ -317,12 +312,8 @@ class TestDeviceEmulatorSubscribeResource(TestDeviceEmulatorBase):
         }
 
         async def mock_get_side_effect(endpoint=""):
-            if endpoint == "/state":
-                return state_response
-            elif endpoint == "/whoami":
-                return whoami_response
-            else:
-                return {"success": False, "message": "Unknown endpoint"}
+            # Not going to be called
+            pass
 
         mock_get.side_effect = mock_get_side_effect
 
@@ -360,12 +351,8 @@ class TestDeviceEmulatorSubscribeResource(TestDeviceEmulatorBase):
         }
 
         async def mock_get_side_effect(endpoint=""):
-            if endpoint == "/state":
-                return state_response
-            elif endpoint == "/whoami":
-                return whoami_response
-            else:
-                return {"success": False, "message": "Unknown endpoint"}
+            # Not going to be called
+            pass
 
         mock_get.side_effect = mock_get_side_effect
 
@@ -396,10 +383,6 @@ class TestDeviceEmulatorSubscribeResource(TestDeviceEmulatorBase):
         async def mock_get_side_effect(endpoint=""):
             if endpoint == "/state":
                 return {"success": False, "message": "Device is unreachable"}
-            elif endpoint == "/whoami":
-                return {"success": False, "message": "Device is unreachable"}
-            else:
-                return {"success": False, "message": "Unknown endpoint"}
 
         mock_get.side_effect = mock_get_side_effect
 

@@ -3,7 +3,7 @@ import traceback
 
 from aiocoap import Context, Message, GET, PUT, POST, DELETE
 
-from IoTEmulator.src.config_type import ControlConfig
+from .config_type import ControlConfig
 
 
 class CoAPClient:
