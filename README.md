@@ -29,7 +29,7 @@ Installation and Setup
     * `JWT_COOKIE_SECURE` - If true this will only allow the cookies that contain your JWTs to be sent over https. In
       production, this should always be set to True.
     * `JWT_COOKIE_CSRF_PROTECT` - Enables csrf protection. Leave as false when testing, because swagger won't work.
-4. Start the application: `poetry run backend/asgi.py` or using uvicorn `uvicorn backend/asgi:app`
+4. Start the application: `poetry run python backend/asgi.py` or using uvicorn `uvicorn backend/asgi:app`
 
 API Documentation
 -----------------
