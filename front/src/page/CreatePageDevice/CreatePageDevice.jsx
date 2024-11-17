@@ -25,7 +25,7 @@ const CreatePageDevice = () => {
     return (
         <div className={module.createDiv}>
             <Link className={module.goBackLick} to={"/"}>Повернутися на головну</Link>
-            <h1>Створити новий девайс</h1>
+            <h1>Підключити девайс</h1>
             <Formik
                 initialValues={INITIAL_VALUES}
                 validationSchema={validationSchema}

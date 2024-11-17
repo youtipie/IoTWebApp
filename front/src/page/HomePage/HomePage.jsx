@@ -15,7 +15,7 @@ const HomePage = () => {
         <div className={module.homeDiv}>
             <h1 className={module.header}>Мої девайси</h1>
             <DeviceList />
-            <button className={module.addBtn} onClick={handleAddDevice}>Додати новий девайс</button>
+            <button className={module.addBtn} onClick={handleAddDevice}>Підключити новий девайс</button>
         </div>
     );
 };
