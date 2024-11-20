@@ -48,7 +48,7 @@ def login():
     if not user or not user.check_password(password):
         return {"message": "Invalid email or password."}, 401
 
-    access_token = create_access_token(identity=user.id)
+    access_token = create_access_token(identity=str(user.id))
     resp = jsonify({"message": "Successfully logged in"})
     set_access_cookies(resp, access_token)
     return resp, 200
