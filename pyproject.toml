@@ -8,6 +8,17 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.12"
 aiocoap = "^0.4.11"
+python-dotenv = "^1.0.1"
+alembic = "^1.14.0"
+flask-jwt-extended = "^4.6.0"
+flask-sqlalchemy = "^3.1.1"
+flask-cors = "^5.0.0"
+validate-email-address = "^1"
+psycopg2 = "^2.9.10"
+asgiref = "^3.8.1"
+uvicorn = "^0.32.0"
+flasgger = "^0.9.7.1"
+coverage = "^7.6.7"
 
 
 [build-system]

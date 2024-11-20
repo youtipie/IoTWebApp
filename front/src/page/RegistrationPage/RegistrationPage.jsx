@@ -1,30 +1,37 @@
-import module from "./RegistrationPage.module.css"
+import module from "./RegistrationPage.module.css";
 
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { Formik, Form, Field, ErrorMessage } from "formik";
 import { Link } from "react-router-dom";
-import * as Yup from 'yup';
+import * as Yup from "yup";
+import { useDispatch, useSelector } from "react-redux";
+import { register } from "../../redux/auth/operations";
+import { selectError, selectIsLoading } from "../../redux/auth/selectors";
 
 const RegistrationPage = () => {
+    const dispatch = useDispatch();
+    const isLoading = useSelector(selectIsLoading);
+    const error = useSelector(selectError);
+
     const INITIAL_VALUES = {
-        email: '',
-        password: '',
-        confirmPassword: '',
+        username: "",
+        email: "",
+        password: "",
     };
 
     const validationSchema = Yup.object({
+        username: Yup.string()
+            .min(3, "Ім'я користувача має містити щонайменше 3 символи")
+            .required("Ім'я користувача є обов'язковим полем"),
         email: Yup.string()
             .email("Неправильний формат електронної пошти")
             .required("Електронна пошта є обов'язковим полем"),
         password: Yup.string()
             .min(6, "Пароль повинен бути не менше 6 символів")
             .required("Пароль є обов'язковим полем"),
-        confirmPassword: Yup.string()
-            .oneOf([Yup.ref('password'), null], "Паролі не співпадають")
-            .required("Підтвердження пароля є обов'язковим полем"),
     });
 
     const handleSubmit = (values, actions) => {
-        console.log(values);
+        dispatch(register(values));
         actions.resetForm();
     };
 
@@ -38,6 +45,11 @@ const RegistrationPage = () => {
             >
                 <Form className={module.form}>
                     <label className={module.formLabel}>
+                        Імя користувача:
+                        <Field type="text" name="username" />
+                        <ErrorMessage name="username" component="span" />
+                    </label>
+                    <label className={module.formLabel}>
                         Електронна пошта:
                         <Field type="email" name="email" />
                         <ErrorMessage name="email" component="span" />
@@ -47,17 +59,21 @@ const RegistrationPage = () => {
                         <Field type="password" name="password" />
                         <ErrorMessage name="password" component="span" />
                     </label>
-                    <label className={module.formLabel}>
-                        Підтвердження пароля:
-                        <Field type="password" name="confirmPassword" />
-                        <ErrorMessage name="confirmPassword" component="span" />
-                    </label>
-                    <Link to={"/login"}>Вже маєте акаунт?</Link>
-                    <button type="submit">Зареєструватися</button>
+
+                    {error && <p className={module.errorMessage}>{error}</p>}
+                    {isLoading ? (
+                        <p>Завантаження...</p>
+                    ) : (
+                        <button type="submit">Зареєструватися</button>
+                    )}
                 </Form>
             </Formik>
+            <Link to={"/login"} className={module.link}>
+                Вже маєте акаунт?
+            </Link>
         </div>
     );
 };
 
 export default RegistrationPage;
+
