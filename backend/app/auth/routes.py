@@ -1,5 +1,6 @@
-from flask import request, jsonify
-from flask_jwt_extended import create_access_token, set_access_cookies, unset_access_cookies, jwt_required
+from flask import request
+from flask_jwt_extended import create_access_token, jwt_required, \
+    create_refresh_token, get_jwt_identity
 
 from . import bp
 from .. import db
@@ -49,17 +50,16 @@ def login():
         return {"message": "Invalid email or password."}, 401
 
     access_token = create_access_token(identity=str(user.id))
-    resp = jsonify({"message": "Successfully logged in"})
-    set_access_cookies(resp, access_token)
-    return resp, 200
+    refresh_token = create_refresh_token(identity=str(user.id))
+    return {"access_token": access_token, "refresh_token": refresh_token}, 200
 
 
-@bp.route("/logout", methods=["POST"])
-@jwt_required()
-def logout():
-    resp = jsonify({"message": "Successfully logged out"})
-    unset_access_cookies(resp)
-    return resp, 200
+@bp.route("/refresh", methods=["POST"])
+@jwt_required(refresh=True)
+def refresh():
+    identity = get_jwt_identity()
+    access_token = create_access_token(identity=identity)
+    return {"access_token": access_token}, 200
 
 
 @bp.route("/verification", methods=["POST"])

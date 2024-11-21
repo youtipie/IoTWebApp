@@ -19,7 +19,9 @@ spec = {
     "components": {
         **components_spec
     },
-    "security": {
-        "cookieAuth": [],
-    }
+    "security": [
+        {
+            "bearerAuth": []
+        },
+    ]
 }
