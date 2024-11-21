@@ -30,19 +30,20 @@ spec = {
         },
         "responses": {
             "200": {
-                "description": "Successfully authenticated. The access token is returned in a cookie named `access_token_cookie`. "
-                               "You need to include this cookie in subsequent requests. Also returns cookie named `csrf_access_token` "
-                               "that have to be included in X-CSRF-TOKEN header in every request.",
+                "description": "Successfully authenticated. The access token and refresh token are returned. "
+                               "You need to include access token in subsequent requests. "
+                               "Refresh token can be used to refresh current user's access token after it expires.",
                 "content": {
                     "application/json": {
                         "example": {
-                            "message": "Successfully logged in"
+                            "access_token": "aaaaaaa.bbbbbbbb.ccccccc",
+                            "refresh_token": "aaaaaaaaaaa.bbbbbbbbbbb.ccccccccc",
                         }
                     }
                 }
             },
             "400": {
-                "$ref": "#components/responses/BadValues"
+                "$ref": "#/components/responses/BadValues"
             },
             "401": {
                 "description": "Invalid credentials",
