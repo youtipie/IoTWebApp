@@ -9,7 +9,7 @@ spec = {
                 "description": "User profile",
                 "content": {
                     "application/json": {
-                        "$ref": "#components/examples/User"
+                        "$ref": "#/components/examples/User"
                     }
                 }
             },

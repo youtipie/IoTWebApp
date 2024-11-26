@@ -12,10 +12,5 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get("SQLALCHEMY_DATABASE_URI") or ""
     SQLALCHEMY_TRACK_MODIFICATIONS = int(os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS", False))
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY") or str(uuid.uuid4())
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRES") or 60))
-    # If true this will only allow the cookies that contain your JWTs to be sent
-    # over https. In production, this should always be set to True
-    JWT_COOKIE_SECURE = int(os.environ.get("JWT_COOKIE_SECURE", False))
-    JWT_TOKEN_LOCATION = ["cookies"]
-    # Always set true in production
-    JWT_COOKIE_CSRF_PROTECT = int(os.environ.get("JWT_COOKIE_CSRF_PROTECT", False))
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=int(os.environ.get("JWT_ACCESS_TOKEN_EXPIRES_MINUTES") or 60))
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=int(os.environ.get("JWT_REFRESH_TOKEN_EXPIRES_DAYS", 30)))

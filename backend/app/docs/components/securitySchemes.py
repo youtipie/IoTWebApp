@@ -1,7 +1,12 @@
 spec = {
-    "cookieAuth": {
-        "type": "apiKey",
-        "in": "cookie",
-        "name": "access_token_cookie"
+    "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+    },
+    "refreshToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
     }
 }

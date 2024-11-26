@@ -1,8 +1,6 @@
-from datetime import datetime, timezone, timedelta
-
 from flask import Flask
 from flasgger import Swagger
-from flask_jwt_extended import JWTManager, get_jwt, get_jwt_identity, create_access_token, set_access_cookies
+from flask_jwt_extended import JWTManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
@@ -17,13 +15,15 @@ def create_app(config):
     app = Flask(__name__)
     app.config.from_object(config)
     app.config["SWAGGER"] = {
-        "openapi": "3.0.1"
+        "openapi": "3.0.3"
     }
     CORS(app)
 
     db.init_app(app)
     jwt.init_app(app)
     swagger.init_app(app)
+
+    app.db = db
 
     from .auth import bp as auth_bp
     app.register_blueprint(auth_bp)
@@ -40,22 +40,39 @@ def create_app(config):
     with app.app_context():
         db.create_all()
 
-    # Maybe move somewhere more appropriate
-    @app.after_request
-    def refresh_expiring_jwts(response):
-        try:
-            exp_timestamp = get_jwt()["exp"]
-            now = datetime.now(timezone.utc)
-            target_timestamp = datetime.timestamp(now + timedelta(minutes=30))
-            if target_timestamp > exp_timestamp:
-                access_token = create_access_token(identity=get_jwt_identity())
-                set_access_cookies(response, access_token)
-            return response
-        except (RuntimeError, KeyError):
-            return response
+    return app
+def create_test_app(config):
+    app = Flask(__name__)
+    app.config.from_object(config)
+    app.config["SWAGGER"] = {
+        "openapi": "3.0.3"
+    }
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    app.config['TESTING'] = True
+
+    CORS(app)
+    db.init_app(app)
+    jwt.init_app(app)
+    swagger.init_app(app)
+
+    app.db = db
+
+    from backend.app.auth import bp as auth_bp
+    app.register_blueprint(auth_bp)
+
+    from backend.app.device import bp as device_bp
+    app.register_blueprint(device_bp)
+
+    from backend.app.networks import bp as networks_bp
+    app.register_blueprint(networks_bp)
+
+    from backend.app.profile import bp as profile_bp
+    app.register_blueprint(profile_bp)
+
+    with app.app_context():
+        db.create_all()
 
     return app
-
 
 from .auth import models
 from .device import models

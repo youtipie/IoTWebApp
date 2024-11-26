@@ -2,52 +2,74 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 export const authInstance = axios.create({
-  baseURL: "http://127.0.0.1:5000",
+  baseURL: "http://127.0.0.1:5000/auth",
 });
 
 export const setToken = (token) => {
-  authInstance.defaults.headers.common["X-CSRF-TOKEN"] = token;
+  authInstance.defaults.headers.common.Authorization = `Bearer ${token}`;
 };
 
 export const clearToken = () => {
-  delete authInstance.defaults.headers.common["X-CSRF-TOKEN"];
+  authInstance.defaults.headers.common.Authorization = "";
 };
 
-// Register user
 export const register = createAsyncThunk(
   "auth/register",
   async (userData, thunkApi) => {
     try {
-      const { data } = await authInstance.post("/auth/register", userData);
+      const { data } = await authInstance.post("/register", userData);
+      setToken(data.access_token);
       return data;
     } catch (error) {
-      return thunkApi.rejectWithValue(error.response?.data?.message || "Error");
+      return thunkApi.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
 
-// Login user
 export const login = createAsyncThunk(
   "auth/login",
   async (userData, thunkApi) => {
     try {
-      const response = await authInstance.post("/auth/login", userData);
-      const csrfToken = response.headers["csrf_access_token"];
-      setToken(csrfToken);
-      return { message: response.data.message, csrfToken };
+      const { data } = await authInstance.post("/login", userData);
+      setToken(data.access_token);
+      return data;
     } catch (error) {
-      return thunkApi.rejectWithValue(error.response?.data?.message || "Error");
+      return thunkApi.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
 
-// Logout user
-export const logout = createAsyncThunk("auth/logout", async (_, thunkApi) => {
+export const logout = createAsyncThunk("/logout", async (_, thunkApi) => {
   try {
-    const { data } = await authInstance.post("/auth/logout");
     clearToken();
-    return data;
+    return {};
   } catch (error) {
-    return thunkApi.rejectWithValue(error.response?.data?.message || "Error");
+    return thunkApi.rejectWithValue(error.message);
   }
 });
+
+export const refreshUser = createAsyncThunk(
+  "auth/refreshUser",
+  async (_, thunkApi) => {
+    const state = thunkApi.getState();
+    const token = state.auth.access_token;
+
+    if (!token) return thunkApi.rejectWithValue("No valid refresh token");
+
+    try {
+      const { data } = await authInstance.post("/refresh", {
+        access_token: token,
+      });
+      setToken(data.access_token);
+      return data;
+    } catch (error) {
+      return thunkApi.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);

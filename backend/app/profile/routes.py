@@ -1,3 +1,6 @@
+from flask import jsonify
+from flask_jwt_extended import unset_access_cookies
+
 from . import bp
 from .. import db
 from ..auth.models import User
@@ -16,6 +19,8 @@ def get_profile(user: User):
 def delete_profile(user: User):
     user.delete_user()
     db.session.commit()
-    return {"message": "User deleted successfully."}, 200
+    resp = jsonify({"message": "User deleted successfully."})
+    unset_access_cookies(resp)
+    return resp, 200
 
 # TODO: Add reset password feature

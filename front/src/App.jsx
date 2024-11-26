@@ -15,8 +15,22 @@ import Layout from './components/Layout/Layout';
 
 
 
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { refreshUser } from './redux/auth/operations';
+import { selectUserDataIsRefreshing } from './redux/auth/selectors';
 
 const App = () => {
+  const dispatch = useDispatch();
+  const isRefreshing = useSelector(selectUserDataIsRefreshing);
+
+  useEffect(() => {
+    dispatch(refreshUser()); // Спроба оновити дані користувача
+  }, [dispatch]);
+
+  if (isRefreshing) {
+    return <p>Loading...</p>; // Показати завантаження під час перевірки
+  }
 
   return (
     <>

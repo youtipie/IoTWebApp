@@ -1,11 +1,16 @@
-import { useSelector } from "react-redux";
-import { selectIsLoggedIn } from "../../redux/auth/selectors";
-import { Navigate } from "react-router-dom";
+import { Navigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { selectIsLoggedIn, selectUserDataIsRefreshing } from '../../redux/auth/selectors';
 
-const PrivateRoute = ({ component, redirectTo = "/" }) => {
+const PrivateRoute = ({ component }) => {
     const isLoggedIn = useSelector(selectIsLoggedIn);
+    const isRefreshing = useSelector(selectUserDataIsRefreshing);
 
-    return isLoggedIn ? <Navigate to={redirectTo} replace /> : component
-}
+    if (isRefreshing) {
+        return <p>Loading...</p>; // Завантаження під час перевірки
+    }
 
-export default PrivateRoute
+    return isLoggedIn ? component : <Navigate to="/login" />;
+};
+
+export default PrivateRoute;

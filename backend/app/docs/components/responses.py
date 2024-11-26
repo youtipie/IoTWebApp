@@ -1,10 +1,10 @@
 spec = {
     "UnauthorizedError": {
-        "description": "No auth cookie provided",
+        "description": "No token provided",
         "content": {
             "application/json": {
                 "example": {
-                    "msg": "Missing cookie \\access_token_cookie\\."
+                    "msg": "Missing Authorization Header."
                 }
             }
         }

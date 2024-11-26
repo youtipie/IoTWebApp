@@ -37,12 +37,12 @@ spec = {
                 "description": "The newly registered user",
                 "content": {
                     "application/json": {
-                        "$ref": "#components/examples/User"
+                        "$ref": "#/components/examples/User"
                     }
                 }
             },
             "400": {
-                "$ref": "#components/responses/BadValues"
+                "$ref": "#/components/responses/BadValues"
             },
             "409": {
                 "description": "Invalid email or password",
