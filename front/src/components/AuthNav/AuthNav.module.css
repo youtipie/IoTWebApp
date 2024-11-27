@@ -1,0 +1,11 @@
+.linkDiv {
+  display: flex;
+  gap: 20px;
+  color: black;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.active {
+  color: #5468ff;
+}

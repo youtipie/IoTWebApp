@@ -4,7 +4,19 @@ import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { Link } from "react-router-dom";
 import * as Yup from 'yup';
 
+import { useSelector, useDispatch } from "react-redux";
+import { login } from "../../redux/auth/operations";
+import {
+    selectIsLoading,
+    //selectError,
+    //selectIsLoggedIn
+} from "../../redux/auth/selectors";
+
 const LoginPage = () => {
+
+    const dispatch = useDispatch();
+    const isLoading = useSelector(selectIsLoading);
+
     const INITIAL_VALUES = {
         email: '',
         password: '',
@@ -20,8 +32,9 @@ const LoginPage = () => {
     });
 
     const handleSubmit = (values, actions) => {
-        console.log(values);
+        dispatch(login(values))
         actions.resetForm();
+        console.log(values);
     };
 
     return (
@@ -50,6 +63,7 @@ const LoginPage = () => {
                     <button type="submit">Увійти</button>
                 </Form>
             </Formik>
+            {isLoading && <p>Loading...</p>}
         </div>
     );
 };
