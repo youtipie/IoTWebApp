@@ -5,12 +5,11 @@ import { Link } from "react-router-dom";
 import * as Yup from "yup";
 import { useDispatch, useSelector } from "react-redux";
 import { register } from "../../redux/auth/operations";
-import { selectError, selectIsLoading } from "../../redux/auth/selectors";
+import { selectIsLoading } from "../../redux/auth/selectors";
 
 const RegistrationPage = () => {
     const dispatch = useDispatch();
     const isLoading = useSelector(selectIsLoading);
-    const error = useSelector(selectError);
 
     const INITIAL_VALUES = {
         username: "",
@@ -60,7 +59,7 @@ const RegistrationPage = () => {
                         <ErrorMessage name="password" component="span" />
                     </label>
 
-                    {error && <p className={module.errorMessage}>{error}</p>}
+                    {/* {error && <p className={module.errorMessage}>{error}</p>} */}
                     {isLoading ? (
                         <p>Завантаження...</p>
                     ) : (
