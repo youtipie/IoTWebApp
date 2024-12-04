@@ -57,7 +57,7 @@ const LoginPage = () => {
                         <ErrorMessage name="password" component="span" />
                     </label>
                     <div className={module.linkDiv}>
-                        <Link>Забули пароль?</Link>
+                        <Link to={"/forget-password"}>Забули пароль?</Link>
                         <Link to={"/register"}>Немає акаунта?</Link>
                     </div>
                     <button type="submit">Увійти</button>

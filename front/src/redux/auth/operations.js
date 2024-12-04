@@ -18,7 +18,9 @@ export const register = createAsyncThunk(
   async (userData, thunkApi) => {
     try {
       const { data } = await authInstance.post("/register", userData);
+
       setToken(data.access_token);
+
       return data;
     } catch (error) {
       return thunkApi.rejectWithValue(
@@ -58,13 +60,12 @@ export const refreshUser = createAsyncThunk(
     const state = thunkApi.getState();
     const token = state.auth.access_token;
 
-    if (!token) return thunkApi.rejectWithValue("No valid refresh token");
-
     try {
+      setToken(data.access_token);
       const { data } = await authInstance.post("/refresh", {
         access_token: token,
       });
-      setToken(data.access_token);
+
       return data;
     } catch (error) {
       return thunkApi.rejectWithValue(

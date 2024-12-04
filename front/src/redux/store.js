@@ -12,16 +12,15 @@ import {
 } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 
-// Конфігурація для persist auth reducer
 const authConfig = {
   key: "auth",
   storage,
-  whitelist: ["token"], // Зберігаємо тільки токен
+  whitelist: ["token"],
 };
 
 export const store = configureStore({
   reducer: {
-    auth: persistReducer(authConfig, authReducer), // Підключення persist для authReducer
+    auth: persistReducer(authConfig, authReducer),
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
