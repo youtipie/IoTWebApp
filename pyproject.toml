@@ -19,6 +19,8 @@ asgiref = "^3.8.1"
 uvicorn = "^0.32.0"
 flasgger = "^0.9.7.1"
 coverage = "^7.6.7"
+pytest = "^8.3.4"
+selenium = "^4.27.1"
 
 
 [build-system]
