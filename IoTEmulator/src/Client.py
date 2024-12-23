@@ -1,7 +1,7 @@
 import json
 import traceback
 
-from aiocoap import Context, Message, GET, PUT, POST, DELETE
+from aiocoap import Context, Message, GET, PUT, POST, DELETE, error
 
 from .config_type import ControlConfig
 
@@ -25,6 +25,9 @@ class CoAPClient:
         try:
             response = await protocol.request(request).response
             return json.loads(response.payload.decode("utf-8"))
+        except error.NetworkError as e:
+            print(e)
+            return {"success": False, "message": "Device is not reachable."}
         except Exception as e:
             print(traceback.print_exception(e))
             return {"success": False, "message": "Something went wrong."}
@@ -39,6 +42,9 @@ class CoAPClient:
         try:
             async for response in pr.observation:
                 yield json.loads(response.payload.decode("utf-8"))
+        except error.NetworkError as e:
+            print(e)
+            yield {"success": False, "message": "Device is not reachable."}
         except Exception as e:
             print(traceback.print_exception(e))
             yield {"success": False, "message": "Something went wrong."}
@@ -54,6 +60,9 @@ class CoAPClient:
         try:
             response = await protocol.request(request).response
             return json.loads(response.payload.decode("utf-8"))
+        except error.NetworkError as e:
+            print(e)
+            return {"success": False, "message": "Device is not reachable."}
         except Exception as e:
             print(traceback.print_exception(e))
             return {"success": False, "message": "Something went wrong."}
@@ -69,6 +78,9 @@ class CoAPClient:
         try:
             response = await protocol.request(request).response
             return json.loads(response.payload.decode("utf-8"))
+        except error.NetworkError as e:
+            print(e)
+            return {"success": False, "message": "Device is not reachable."}
         except Exception as e:
             print(traceback.print_exception(e))
             return {"success": False, "message": "Something went wrong."}
@@ -84,6 +96,9 @@ class CoAPClient:
         try:
             response = await protocol.request(request).response
             return json.loads(response.payload.decode("utf-8"))
+        except error.NetworkError as e:
+            print(e)
+            return {"success": False, "message": "Device is not reachable."}
         except Exception as e:
             print(traceback.print_exception(e))
             return {"success": False, "message": "Something went wrong."}

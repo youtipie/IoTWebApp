@@ -8,6 +8,6 @@ app = WsgiToAsgi(create_app(Config))
 
 if __name__ == "__main__":
     try:
-        uvicorn.run("asgi:app", port=5000, log_level="info", reload=True)
+        uvicorn.run("asgi:app", port=5000, log_level="info", reload=False)
     except KeyboardInterrupt:
         exit()

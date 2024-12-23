@@ -1,7 +1,6 @@
 from flask_sqlalchemy.query import Query
 
 from .. import db
-from ..device.models import Device
 
 
 class Network(db.Model):
@@ -19,6 +18,7 @@ class Network(db.Model):
 
     # TODO: Refactor or optimize
     def delete_network(self) -> None:
+        from ..device.models import Device
         network_id = self.id
         subquery = (
             db.session.query(NetworkDevice.device_id)

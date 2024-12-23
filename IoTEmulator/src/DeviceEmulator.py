@@ -30,7 +30,13 @@ class DeviceEmulator:
         self.observations = {}
         self.config["id"] = str(uuid.uuid4())  # Assign later on the backend
         self.load_data(config)
-        self.state = self.generate_state()
+        self.state = {}
+        self.generate_state()
+
+    async def update_state(self):
+        while True:
+            self.generate_state()
+            await asyncio.sleep(1)
 
     def save_data(self):
         data = {
@@ -147,11 +153,9 @@ class DeviceEmulator:
         return None
 
     def generate_state(self) -> dict:
-        new_state = {}
         values = itertools.chain(self.config["readings"].items(), self.config["parameters"].items())
         for (name, field) in values:
-            value = self.state.get(name) if (hasattr(self, "state")
-                                             and name in self.config["parameters"]) else field.get("default")
+            value = field.get("default")
             if value is None:
                 match field.get("type"):
                     case "bool":
@@ -162,8 +166,7 @@ class DeviceEmulator:
                         value = random.uniform(float(field["min"]), float(field["max"]))
                     case _:
                         raise TypeError(f"Invalid type for field: '{name}'")
-            new_state[name] = value
-        return new_state
+            self.state[name] = value
 
     class WhoAmI(resource.Resource):
         def __init__(self, current_device):
@@ -183,7 +186,6 @@ class DeviceEmulator:
 
         async def notify_changes(self):
             while True:
-                self.__current_device.state = self.__current_device.generate_state()
                 self.updated_state()
                 await asyncio.sleep(5)
 
@@ -316,9 +318,17 @@ class DeviceEmulator:
         async def render_delete(self, request):
             logger.debug(f"{request.remote.uri_base_local}: DELETE Subscribe")
             subscription_id = json.loads(request.payload.decode("utf-8"))
-            self.__current_device.instructions = [
+
+            filtered_instructions = [
                 sub for sub in self.__current_device.instructions if sub.get("id") != subscription_id
             ]
+
+            if len(filtered_instructions) == len(self.__current_device.instructions):
+                return Message(payload=json.dumps(
+                    {"success": False, "message": f"No subscription with id: {subscription_id}"}
+                ).encode("utf-8"))
+
+            self.__current_device.instructions = filtered_instructions
 
             if len(self.__current_device.instructions) == 0:
                 self.__current_device.observed_publishers = []
@@ -354,4 +364,5 @@ class DeviceEmulator:
         await Context.create_server_context(root, bind=(self.__ip_address, self.__port))
         logger.debug(f"Server started on {self.__ip_address}:{self.__port}")
         await self.resume_observations()
+        await asyncio.get_event_loop().create_task(self.update_state())
         await asyncio.get_running_loop().create_future()

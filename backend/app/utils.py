@@ -1,3 +1,5 @@
+import asyncio
+
 from .auth.models import User
 from flask import request
 from functools import wraps
@@ -42,6 +44,10 @@ def with_auth(func):
         user = User.query.get(user_id)
         if not user:
             return {"message": "User with such id does not exist."}, 404
-        return func(*args, user=user, **kwargs)
+
+        if asyncio.iscoroutinefunction(func):
+            return asyncio.run(func(*args, user=user, **kwargs))
+        else:
+            return func(*args, user=user, **kwargs)
 
     return wrapper

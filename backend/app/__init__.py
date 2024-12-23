@@ -41,6 +41,8 @@ def create_app(config):
         db.create_all()
 
     return app
+
+
 def create_test_app(config):
     app = Flask(__name__)
     app.config.from_object(config)
@@ -73,6 +75,7 @@ def create_test_app(config):
         db.create_all()
 
     return app
+
 
 from .auth import models
 from .device import models
