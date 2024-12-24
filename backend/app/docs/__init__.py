@@ -4,9 +4,9 @@ from .components import spec as components_spec
 # Using spec as dict instead of yaml, because flasgger is piece of shit
 spec = {
     "info": {
-        "title": "Bookstore API",
-        "description": "API for managing a bookstore",
-        "version": "0.5.0"
+        "title": "IoT Device Manager",
+        "description": "API for managing a IoT devices",
+        "version": "1.0"
     },
     "basePath": "/",
     "schemes": [
