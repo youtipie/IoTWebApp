@@ -1,7 +1,9 @@
+import { Link } from "react-router-dom";
+
 const HomePage = () => {
     return (
         <div>
-            HomePage
+            <Link to={'/networks'}>Network</Link>
         </div>
     );
 

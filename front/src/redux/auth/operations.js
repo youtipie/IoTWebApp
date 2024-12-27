@@ -2,7 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 export const authInstance = axios.create({
-  baseURL: "http://127.0.0.1:5000/auth",
+  baseURL: "http://127.0.0.1:5000",
 });
 
 export const setToken = (token) => {
@@ -17,7 +17,7 @@ export const register = createAsyncThunk(
   "auth/register",
   async (userData, thunkApi) => {
     try {
-      const { data } = await authInstance.post("/register", userData);
+      const { data } = await authInstance.post("/auth/register", userData);
 
       setToken(data.access_token);
 
@@ -34,7 +34,7 @@ export const login = createAsyncThunk(
   "auth/login",
   async (userData, thunkApi) => {
     try {
-      const { data } = await authInstance.post("/login", userData);
+      const { data } = await authInstance.post("/auth/login", userData);
       setToken(data.access_token);
       return data;
     } catch (error) {
@@ -45,7 +45,7 @@ export const login = createAsyncThunk(
   }
 );
 
-export const logout = createAsyncThunk("/logout", async (_, thunkApi) => {
+export const logout = createAsyncThunk("/auth/logout", async (_, thunkApi) => {
   try {
     clearToken();
     return {};
@@ -58,11 +58,17 @@ export const refreshUser = createAsyncThunk(
   "auth/refreshUser",
   async (_, thunkApi) => {
     const state = thunkApi.getState();
-    const token = state.auth.access_token;
+    let token = state.auth.access_token;
+
+    token = token ? token.replace(/^"|"$/g, "") : null;
+
+    if (!token) {
+      return thunkApi.rejectWithValue("Token is missing or invalid.");
+    }
 
     try {
-      setToken(data.access_token);
-      const { data } = await authInstance.post("/refresh", {
+      setToken(token);
+      const { data } = await authInstance.post("/auth/refresh", {
         access_token: token,
       });
 

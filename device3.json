@@ -1,0 +1,20 @@
+{
+    "config": {
+        "name": "Temp2",
+        "readings": {
+            "is_enabled": {
+                "type": "bool"
+            }
+        },
+        "parameters": {
+            "humidity": {
+                "type": "range",
+                "min": -50,
+                "max": 50
+            }
+        },
+        "id": "06c92ea4-f369-4a3b-b48f-c29b7d3bb26b"
+    },
+    "observed_publishers": [],
+    "instructions": []
+}
