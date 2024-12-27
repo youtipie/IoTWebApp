@@ -1,0 +1,21 @@
+{
+    "config": {
+        "name": "Temp1",
+        "readings": {
+            "is_enabled": {
+                "type": "bool",
+                "default": false
+            }
+        },
+        "parameters": {
+            "brightness": {
+                "type": "range",
+                "min": -50,
+                "max": 50
+            }
+        },
+        "id": "23b67213-add5-4801-b326-c5356800be23"
+    },
+    "observed_publishers": [],
+    "instructions": []
+}

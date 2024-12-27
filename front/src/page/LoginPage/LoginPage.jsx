@@ -18,8 +18,8 @@ const LoginPage = () => {
     const isLoading = useSelector(selectIsLoading);
 
     const INITIAL_VALUES = {
-        email: '',
-        password: '',
+        email: 'serhiiladniak@gmail.com',
+        password: '123qweRTY',
     };
 
     const validationSchema = Yup.object({

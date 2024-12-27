@@ -1,25 +1,32 @@
-import module from "./DeviceList.module.css"
+import module from "./DeviceList.module.css";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchDevices } from "../../redux/devices/operations";
+import { selectDevices, selectIsLoadingDevices, selectDevicesError } from "../../redux/devices/selectors";
+import DeviceItem from "../DeviceItem/DeviceItem";
 
-import { useEffect, useState } from 'react';
-import DeviceItem from '../DeviceItem/DeviceItem';
-
-const DeviceList = () => {
-    const [devices, setDevices] = useState([]);
+const DeviceList = ({ networkId }) => {
+    const dispatch = useDispatch();
+    const devices = useSelector(selectDevices);
+    const isLoading = useSelector(selectIsLoadingDevices);
+    const error = useSelector(selectDevicesError);
 
     useEffect(() => {
-        const fetchedDevices = [
-            { id: 1, name: 'Thermostat', status: 'Active' },
-            { id: 2, name: 'Camera', status: 'Inactive' },
-        ];
-        setDevices(fetchedDevices);
-    }, []);
+        if (networkId) {
+            dispatch(fetchDevices(networkId));
+        }
+    }, [dispatch, networkId]);
 
     return (
-        <ul className={module.deviceList}>
-            {devices.map((device) => (
-                <DeviceItem key={device.id} device={device} />
-            ))}
-        </ul>
+        <div>
+            {isLoading && <p>Loading devices...</p>}
+            {error && <p className={module.error}>{error}</p>}
+            <ul className={module.deviceList}>
+                {devices.map((device) => (
+                    <DeviceItem key={device.id} device={device} />
+                ))}
+            </ul>
+        </div>
     );
 };
 
